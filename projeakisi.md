@@ -66,3 +66,70 @@ Sonuç: Terminal üzerinde "System Healthy" çıktısı alınarak tüm bileşenl
 Proje, Nisanur Kırtepe tarafından yönetilen GitHub reposu üzerinden takip edilmektedir. Hazırlanan altyapı kodları ve bağımlılık listesi (requirements.txt), repo ile senkronize edilmeye hazır durumdadır.
 
 Durum: 🟢 Geliştirme ortamı ekip arkadaşları için tamamen hazırdır.
+
+
+🗄️ 3. Hafta: Veritabanı Mimarisi ve Veri Modelleme Raporu 📊
+Sorumlu: Mehmet Ali Kırımlı (Öğrenci No: 250542027)
+Son Teslim Tarihi: 28 Mart 2026
+Öncelik Durumu: 🟡 Orta
+
+🎯 1. Görevin Amacı ve Kapsamı
+Bu hafta odak noktamız, akıllı e-ticaret öneri sisteminin temelini oluşturacak olan veritabanı yapısının tasarlanmasıdır. Sistem; kullanıcı davranışlarını analiz edip kişiselleştirilmiş öneriler sunabilmek için yüksek performanslı ve ilişkisel bir veri modeline ihtiyaç duymaktadır.
+
+📐 2. Veri Modeli ve Tablo Yapıları (ER Tasarımı)
+Sistemimiz, etkili bir öneri motoru için üç ana tablo üzerine inşa edilmiştir:
+
+👤 Kullanıcılar (Users) Tablosu
+Sisteme kayıtlı kullanıcıların demografik ve tercih verilerini tutar.
+
+user_id (Primary Key): Benzersiz kullanıcı numarası.
+
+user_name: Kullanıcı adı/tanımlayıcı.
+
+location: Bölgesel öneriler için lokasyon verisi.
+
+joined_at: Kullanıcı kayıt tarihi.
+
+📦 Ürünler (Products) Tablosu
+Katalogdaki tüm ürünlerin detaylarını içerir.
+
+product_id (Primary Key): Benzersiz ürün numarası.
+
+product_name: Ürün ismi.
+
+category: Nisanur'un veri setiyle uyumlu kategori bilgisi.
+
+price: Ürün fiyatı.
+
+🔄 Etkileşimler (Interactions) Tablosu
+Sistemin "zekasını" oluşturan, kullanıcı ve ürün arasındaki bağı kuran tablodur.
+
+interaction_id: İşlem numarası.
+
+user_id (Foreign Key): İşlemi yapan kullanıcı.
+
+product_id (Foreign Key): Etkileşime girilen ürün.
+
+interaction_type: Etkileşim türü (View, Add to Cart, Purchase).
+
+timestamp: İşlemin gerçekleştiği an.
+
+⚡ 3. Teknik Entegrasyon ve Performans Planı
+Veritabanı tasarımı, kurduğumuz teknoloji yığınıyla (Spark, Elasticsearch) tam uyumlu olacak şekilde planlanmıştır:
+
+İndeksleme (Indexing): Arama hızını optimize etmek için user_id ve product_id sütunları üzerinde indeksleme yapılarak sorgu süreleri minimize edilmiştir.
+
+Spark Entegrasyonu: PySpark 4.1.1 kullanılarak, veritabanındaki büyük etkileşim tabloları "Batch" veya "Stream" yöntemiyle işlenerek algoritma eğitimine hazır hale getirilecektir.
+
+Elasticsearch Senkronizasyonu: Ürün tablosu, milisaniyeler içinde arama ve filtreleme yapılabilmesi için Elasticsearch'e "Index" olarak aktarılacaktır.
+
+✅ 4. 3. Hafta Çıktıları ve Mevcut Durum
+Veritabanı Şeması: Tamamlandı.
+
+İlişki Tanımlamaları: Tamamlandı.
+
+Veri Entegrasyon Planı: Hazırlandı.
+
+Not: Bu veritabanı yapısı, Muhammed Emir'in araştırdığı "Collaborative Filtering" ve "Content-based Filtering" algoritmalarının ihtiyaç duyduğu tüm veri tiplerini desteklemektedir.
+
+Durum: 🟢 Veritabanı tasarımı aşaması, yazılım geliştirme sürecine entegre edilmeye hazırdır.
