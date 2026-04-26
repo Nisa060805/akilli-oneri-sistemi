@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
+class CollaborativeFilteringRecommender:
+    def __init__(self):
+        self.user_item_matrix = None
+        self.user_similarity_df = None
+
+    def matris_olustur(self, data, user_col='user_id', item_col='item_id', rating_col='rating'):
+        """
+        Ham etkileşim verisinden Kullanıcı-Ürün matrisini oluşturur.
+        Etkileşim olmayan (NaN) durumları 0 ile doldurur.
+        """
+        self.user_item_matrix = data.pivot_table(
+            index=user_col, 
+            columns=item_col, 
+            values=rating_col
+        ).fillna(0)
+        
+        print("Kullanıcı-Ürün matrisi başarıyla oluşturuldu.")
+        return self.user_item_matrix
+
+    def benzerlik_hesapla(self):
+        """
+        Scikit-learn kullanarak kullanıcılar arasındaki Kosinüs Benzerliğini hesaplar.
+        """
+        if self.user_item_matrix is None:
+            raise ValueError("Önce 'matris_olustur' metodunu çağırarak matrisi oluşturmalısınız.")
+
+        # Scikit-learn ile benzerlik matrisini hesaplama
+        similarity_matrix = cosine_similarity(self.user_item_matrix)
+        
+        # Anlaşılabilirlik için Pandas DataFrame'e çeviriyoruz
+        self.user_similarity_df = pd.DataFrame(
+            similarity_matrix, 
+            index=self.user_item_matrix.index, 
+            columns=self.user_item_matrix.index
+        )
+        
+        print("Kullanıcı benzerlik matrisi hesaplandı.")
+        return self.user_similarity_df
+
+    def en_benzer_kullanicilari_bul(self, user_id, top_n=3):
+        """
+        Verilen bir kullanıcıya en çok benzeyen 'top_n' kullanıcıyı listeler.
+        """
+        if self.user_similarity_df is None:
+            raise ValueError("Önce 'benzerlik_hesapla' metodunu çalıştırmalısınız.")
+            
+        if user_id not in self.user_similarity_df.index:
+            raise ValueError(f"{user_id} ID'li kullanıcı matriste bulunamadı.")
+
+        # Kullanıcının kendisiyle olan benzerliğini (1.0) çıkarıp diğerlerini sıralıyoruz
+        similar_users = self.user_similarity_df[user_id].drop(user_id).sort_values(ascending=False).head(top_n)
+        return similar_users
+
+# --- ÖRNEK KULLANIM TESTİ ---
+if __name__ == "__main__":
+    # Test için sahte (dummy) veri oluşturuyoruz
+    ornek_veri = pd.DataFrame({
+        'user_id': [1, 1, 1, 2, 2, 3, 3, 4],
+        'item_id': ['A', 'B', 'C', 'A', 'B', 'B', 'C', 'A'],
+        'rating':  [5, 4, 3, 5, 4, 2, 5, 1]
+    })
+
+    # İskeleti ayağa kaldıralım
+    recommender = CollaborativeFilteringRecommender()
+    recommender.matris_olustur(ornek_veri)
+    recommender.benzerlik_hesapla()
+    
+    # 1 numaralı kullanıcıya en çok benzeyen 2 kullanıcıyı bulalım
+    benzerler = recommender.en_benzer_kullanicilari_bul(user_id=1, top_n=2)
+    print(f"\n1 Numaralı kullanıcıya en çok benzeyenler:\n{benzerler}")
