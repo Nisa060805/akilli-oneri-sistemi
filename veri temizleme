@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+
+def e_ticaret_veri_temizleme(dosya_yolu):
+    print(f"[{dosya_yolu}] dosyası okunuyor...")
+    # Veriyi yükle
+    df = pd.read_csv(dosya_yolu)
+    
+    print("1. Veri Türleri Düzenleniyor...")
+    # Öneri sistemi için kritik olan ID'leri kategorik (string) tipe çevirelim
+    df['kullanici_id'] = df['kullanici_id'].astype(str)
+    df['urun_id'] = df['urun_id'].astype(str)
+    
+    # Tarih formatını standart datetime yapalım
+    if 'tarih' in df.columns:
+        df['tarih'] = pd.to_datetime(df['tarih'], errors='coerce')
+        
+    # Sayısal olması gereken sütunları (fiyat, puan vb.) garantiye alalım
+    if 'fiyat' in df.columns:
+        df['fiyat'] = pd.to_numeric(df['fiyat'], errors='coerce')
+    if 'puan' in df.columns:
+        df['puan'] = pd.to_numeric(df['puan'], errors='coerce')
+
+    print("2. Eksik Veriler Gideriliyor...")
+    # Kullanıcı veya Ürün ID'si boş olan satırlar öneri algoritmalarında işe yaramaz, onları tamamen siliyoruz
+    df.dropna(subset=['kullanici_id', 'urun_id'], inplace=True)
+    
+    # Puanı eksik olanları, o ürünün ortalama puanı ile dolduralım
+    if 'puan' in df.columns:
+        df['puan'] = df.groupby('urun_id')['puan'].transform(lambda x: x.fillna(x.mean()))
+        # Eğer hiç puanlanmamış bir ürünse (ortalama NaN ise) veri setinin genel ortalaması ile dolduralım
+        df['puan'].fillna(df['puan'].mean(), inplace=True)
+        
+    # Fiyatı eksik olan verileri, fiyatların medyanı (ortancası) ile dolduralım
+    if 'fiyat' in df.columns:
+        df['fiyat'].fillna(df['fiyat'].median(), inplace=True)
+
+    print("3. Aykırı Değerler (Outliers) Temizleniyor...")
+    if 'fiyat' in df.columns:
+        # Fiyatı 0 veya negatif olan hatalı girişleri çıkaralım
+        df = df[df['fiyat'] > 0]
+        
+        # IQR (Çeyrekler Açıklığı) yöntemiyle aşırı uçuk fiyatlı hatalı siparişleri filtreleme
+        Q1 = df['fiyat'].quantile(0.25)
+        Q3 = df['fiyat'].quantile(0.75)
+        IQR = Q3 - Q1
+        alt_sinir = Q1 - 1.5 * IQR
+        ust_sinir = Q3 + 1.5 * IQR
+        df = df[(df['fiyat'] >= alt_sinir) & (df['fiyat'] <= ust_sinir)]
+
+    if 'puan' in df.columns:
+        # Puanın 1 ile 5 arasında olmasını garanti edelim (farklı bir puanlamaysa burayı güncelleyebilirsin)
+        df = df[(df['puan'] >= 1) & (df['puan'] <= 5)]
+
+    print("Veri ön işleme ve temizleme başarıyla tamamlandı!")
+    
+    # Temizlenmiş veriyi yeni bir dosya olarak kaydet
+    temiz_dosya = "temizlenmis_veri.csv"
+    df.to_csv(temiz_dosya, index=False)
+    print(f"Tertemiz verin '{temiz_dosya}' adıyla kaydedildi. Modele girmeye hazır.")
+    
+    return df
+
+# Kodu çalıştırmak için:
+# temiz_df = e_ticaret_veri_temizleme("senin_veri_setin.csv")
