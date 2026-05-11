@@ -1,0 +1,88 @@
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+
+class CollaborativeFiltering:
+    def __init__(self):
+        # Sınıf başlatıldığında tutulacak temel değişkenler
+        self.user_item_matrix = None
+        self.user_similarity_df = None
+
+    def matris_olustur(self, veri, kullanici_kolonu='kullanici_id', urun_kolonu='urun_id', etkilesim_kolonu='etkilesim_puani'):
+        """
+        Kullanıcıların ürünlerle olan geçmiş etkileşimlerinden (puan, tıklama) bir Kullanıcı-Ürün matrisi oluşturur.
+        Etkileşim olmayan kısımlar 0 ile doldurulur.
+        """
+        self.user_item_matrix = veri.pivot_table(
+            index=kullanici_kolonu, 
+            columns=urun_kolonu, 
+            values=etkilesim_kolonu
+        ).fillna(0)
+        
+        print("Kullanıcı-Ürün matrisi başarıyla oluşturuldu.")
+        return self.user_item_matrix
+
+    def benzerlik_hesapla(self):
+        """
+        Scikit-learn kullanarak kullanıcılar arasındaki kosinüs benzerliğini (cosine similarity) hesaplar.
+        """
+        if self.user_item_matrix is None:
+            raise ValueError("Önce matris_olustur() fonksiyonunu çalıştırmalısınız.")
+
+        # Scikit-learn ile benzerlik hesaplaması
+        benzerlik_matrisi = cosine_similarity(self.user_item_matrix)
+        
+        # Sonucu daha kolay okuyabilmek için Pandas DataFrame'e çeviriyoruz
+        self.user_similarity_df = pd.DataFrame(
+            benzerlik_matrisi, 
+            index=self.user_item_matrix.index, 
+            columns=self.user_item_matrix.index
+        )
+        
+        print("Kullanıcılar arası kosinüs benzerliği hesaplandı.")
+        return self.user_similarity_df
+
+    def en_benzer_kullanicilari_bul(self, kullanici_id, getirilecek_kisi_sayisi=3):
+        """
+        Hedef kullanıcıya alışkanlıkları en çok benzeyen diğer kullanıcıları döndürür.
+        """
+        if self.user_similarity_df is None:
+            raise ValueError("Önce benzerlik_hesapla() fonksiyonunu çalıştırmalısınız.")
+            
+        if kullanici_id not in self.user_similarity_df.index:
+            raise ValueError("Bu kullanıcı kimliği matriste bulunamadı.")
+
+        # Kullanıcının kendisiyle olan benzerlik puanını (1.0) çıkarıyoruz
+        benzer_kullanicilar = self.user_similarity_df[kullanici_id].drop(kullanici_id)
+        
+        # Benzerlik oranına göre büyükten küçüğe sıralayıp en üsttekileri alıyoruz
+        en_iyiler = benzer_kullanicilar.sort_values(ascending=False).head(getirilecek_kisi_sayisi)
+        
+        return en_iyiler
+
+
+# ==========================================
+# TEST VE KULLANIM BÖLÜMÜ
+# ==========================================
+if __name__ == "__main__":
+    # 1. Sistemin çalışıp çalışmadığını görmek için örnek bir veri seti oluşturalım
+    ornek_veri = pd.DataFrame({
+        'kullanici_id': [1, 1, 1, 2, 2, 3, 3, 4],
+        'urun_id': ['Telefon', 'Kulaklık', 'Kılıf', 'Telefon', 'Kulaklık', 'Laptop', 'Fare', 'Telefon'],
+        'etkilesim_puani': [5, 4, 5, 5, 3, 4, 5, 1] # Puan, tıklama sayısı vs. olabilir
+    })
+
+    # 2. Sınıfı çağırıp iskeleti ayağa kaldıralım
+    oneri_sistemi = CollaborativeFiltering()
+
+    # 3. Matrisi oluşturalım
+    oneri_sistemi.matris_olustur(ornek_veri)
+
+    # 4. Benzerlikleri hesaplayalım
+    oneri_sistemi.benzerlik_hesapla()
+
+    # 5. 1 numaralı kullanıcıya en çok benzeyen 2 kişiyi bulalım
+    hedef_kullanici = 1
+    benzerler = oneri_sistemi.en_benzer_kullanicilari_bul(kullanici_id=hedef_kullanici, getirilecek_kisi_sayisi=2)
+    
+    print(f"\n{hedef_kullanici} numaralı kullanıcıya en çok benzeyen kullanıcılar ve benzerlik oranları:")
+    print(benzerler)
