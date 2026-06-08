@@ -1,68 +1,59 @@
-# Akıllı E-Ticaret Öneri Sistemi
 
-## Proje Açıklaması
-Bu projede kullanıcıların alışveriş davranışlarını analiz eden ve kişiselleştirilmiş ürün önerileri sunan bir öneri sistemi geliştirilecektir.
+
+# GEREKSİNİM ANALİZİ DÖKÜMANI
+
+**Proje Adı:** Akıllı E-Ticaret Öneri Sistemi
+
+**Modül:** A/B Test Platformu ve Performans İzleme Araçları
+
+**Görevi Hazırlayan:** Nisanur Kırtepe
 
 ---
 
-## Hafta 1 – Veri Seti Keşfi
+## 1. A/B Test Platformu Fonksiyonel Gereksinimleri (FR)
 
-### Yapılan Çalışmalar
-- Kullanıcı verileri incelendi
-- Ürün verileri analiz edildi
-- Kullanıcı davranış verileri değerlendirildi
+Bu modül, sistemdeki öneri algoritmalarının (Collaborative Filtering vs. Content-Based Filtering) gerçek kullanıcılar üzerindeki başarısını ölçmek ve kıyaslamak amacıyla tasarlanacaktır.
 
-### Veri Analizi
-- Veri seti büyüklüğü incelendi
-- Eksik veriler kontrol edildi
-- Aykırı değerler araştırıldı
+* **FR-1.1: Kullanıcı Segmentasyonu (Segmentation)**
+* Sistem, sisteme gelen kullanıcıları belirli kriterlere göre (coğrafi konum, geçmiş alışveriş sıklığı, cihaz tipi veya rastgele atanmış ID'ler) segmentlere ayırabilmelidir.
 
-### Veri Ön İşleme Planı
-- Eksik verilerin düzenlenmesi
-- Veri temizleme işlemleri
-- Kategorik verilerin sayısallaştırılması
 
-🛠️ 1. Hafta: Geliştirme Ortamı ve Altyapı Kurulum Raporu 🚀
-Sorumlu: Mehmet Ali Kırımlı (Öğrenci No: 250542027)
-Tarih: 11 Mart 2026
+* **FR-1.2: Test Grupları Oluşturma (Dynamic Group Allocation)**
+* Gelen trafik dinamik ve adil bir şekilde **Grup A (Kontrol Grubu - Eski Algoritma)** ve **Grup B (Varyant Grubu - Yeni Algoritma)** olarak ikiye bölünmelidir (Örn: %50 - %50 veya %80 - %20).
+* Bir kullanıcı test süreci boyunca hep aynı grupta kalmalıdır (Session/Cookie veya User ID bazlı kalıcılık).
 
-💻 1. Proje Başlatma ve Ortam Hazırlığı
-Projenin ilk aşamasında, ekip üyelerinin farklı donanımlarda bile aynı kod çıktılarını alabilmesini sağlayan "izole ve standart bir geliştirme ortamı" hedeflenmiştir.
 
-IDE Seçimi: Geliştirme arayüzü olarak VS Code tabanlı ve yapay zeka ajan desteğine sahip Antigravity tercih edilmiştir. Bu araç, karmaşık kurulum süreçlerini otomatize etmek için kullanılmıştır.
+* **FR-1.3: Sonuç Analizi ve Metrik Takibi (A/B Analytics)**
+* Her iki grubun **Tıklama Oranı (CTR - Click-Through Rate)**, **Sepete Ekleme Oranı** ve **Dönüşüm Oranı (Conversion Rate)** hesaplanmalıdır.
+* Elde edilen sonuçların istatistiksel olarak anlamlı olup olmadığını doğrulamak için **p-value (p-değeri)** hesabı yapılmalıdır.
 
-Klasör Mimarisi: Yazılım mühendisliği prensiplerine uygun, modüler bir dizin yapısı oluşturulmuştur:
 
-📂 data/raw/: Nisanur'un bulacağı ham veri setleri için.
 
-📂 src/models/: Muhammed Emir'in geliştireceği algoritmalar için.
+---
 
-📂 notebooks/: Deneysel analizler ve Jupyter çalışmaları için.
+## 2. Performans İzleme Araçları Gereksinimleri (Monitoring)
 
-📂 venv/: Proje bağımlılıklarını izole eden sanal ortam.
+Sistemin mikroservis mimarisinde (Kafka, Spark, Elasticsearch) stabil çalışıp çalışmadığını anlamak için kritik sistem metrikleri sürekli izlenmelidir.
 
-📦 2. Kütüphaneler ve Bağımlılık Yönetimi
-Sistem bağımlılıklarının çakışmaması ve "benim bilgisayarımda çalışıyor" sorununu önlemek için bir Python Sanal Ortamı (venv) yapılandırılmıştır. Temel teknolojiler şu sürümlerle sisteme entegre edilmiştir:
+### 2.1. İzlenecek Kritik Metrikler
 
-Kütüphane	Versiyon	Görev
-Pandas 🐼	v2.3.3	Veri manipülasyonu ve Nisanur'un veri keşfi süreci için temel araçtır.
-Scikit-learn 🧠	v1.7.2	Muhammed Emir'in araştıracağı makine öğrenimi modellerinin eğitilmesi için kurulmuştur.
-PySpark ⚡	v4.1.1	Projenin "Gerçek Zamanlı Öneri Motoru" kısmındaki büyük veri işleme kapasitesini sağlar.
+* **Yanıt Süresi (Latency):** Öneri motorunun bir kullanıcıya öneri listesi üretirken harcadığı süre (milisaniye - ms cinsinden). Hedef: < 200ms.
+* **Hata Oranları (Error Rates):** HTTP 500 hataları, Kafka veri kaybı/gecikmesi veya veri tabanı zaman aşımı (timeout) oranları.
+* **Kaynak Kullanımı (Resource Utilization):** Spark ve Python uygulamalarının anlık CPU, RAM ve Disk kullanımı.
+* **Veri Akış Hızı (Throughput):** Kafka üzerinden anlık akan log/etkinlik sayısı (event/second).
 
-E-Tablolar'a aktar
+### 2.2. Verilerin Görselleştirilmesi (Data Visualization)
 
-✅ 3. Sistem Doğrulama (Smoke Test)
-Kurulumun ardından sistemin uçtan uca (end-to-end) çalışabilirliğini denetlemek adına test_health.py isimli bir "Duman Testi" (Smoke Test) uygulanmıştır.
+* Toplanan metrikler, sistem yöneticisinin görebileceği **Grafana** tarzı anlık grafiklere (Line Chart, Bar Chart) dönüştürülmelidir.
+* Hata oranları belirli bir eşiği (%5) geçtiğinde sistem otomatik olarak **Alert (Uyarı)** üretmelidir.
 
-Veri Analizi Testi: Pandas DataFrame yapıları hatasız bir şekilde oluşturulmuş ve işlenmiştir.
+---
 
-Yapay Zeka Testi: Scikit-learn üzerinden örnek bir model başarıyla eğitilmiş ve doğru tahminler üretilmiştir.
+## 3. UI/UX (Kullanıcı Arayüzü ve Deneyimi) Gereksinimleri
 
-Büyük Veri Testi: Spark Session sorunsuz bir şekilde başlatılmış ve veri sayımı (count) gerçekleştirilmiştir.
+* **UI-3.1: Kontrol Paneli (Dashboard):** Yönetici paneli temiz, minimalist ve koyu/açık tema desteğine uygun olmalıdır. Sol menüde "A/B Testleri" ve "Sistem Performansı" sekmeleri yer almalıdır.
+* **UI-3.2: Canlı Grafik Akışı:** Performans metrikleri sayfayı yenilemeye gerek kalmadan (WebSocket veya kısa aralıklı polling ile) canlı olarak güncellenmelidir.
+* **UX-3.3: Kolay Test Yönetimi:** Yönetici, yeni bir A/B testi başlatırken karmaşık kodlar yazmak yerine, sadece bir buton yardımıyla trafik oranlarını (%50 - %50 vb.) kaydırıcı (slider) ile ayarlayabilmelidir.
+* **UX-3.4: Hata Bildirimleri:** Kritik bir sistem hatası veya çökme durumunda, ekranın sağ üst köşesinde net ve kırmızı renkli (Pop-up/Toast) uyarı pencereleri belirmelidir.
 
-Sonuç: Terminal üzerinde "System Healthy" çıktısı alınarak tüm bileşenlerin entegre bir şekilde çalıştığı somut olarak kanıtlanmıştır.
 
-🏁 4. Versiyon Kontrol ve İş Birliği
-Proje, Nisanur Kırtepe tarafından yönetilen GitHub reposu üzerinden takip edilmektedir. Hazırlanan altyapı kodları ve bağımlılık listesi (requirements.txt), repo ile senkronize edilmeye hazır durumdadır.
-
-Durum: 🟢 Geliştirme ortamı ekip arkadaşları için tamamen hazırdır.
